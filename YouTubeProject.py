@@ -589,7 +589,7 @@ def front_end_design(youtube, db):
     
 
 def main():
-    APIKEY = "AIzaSyCNzZRqaH8XmGDq9t7bq82vd7dBy2wGxwg"
+    APIKEY = "Your API Key"
     #channel_id = "UCws0tsIh0zcExs4e064Mibg"
     if 'youtube' not in st.session_state:
         st.session_state.youtube = youtube_connection(APIKEY)
