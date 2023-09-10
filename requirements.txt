@@ -1,0 +1,5 @@
+google-api-python-client==2.97.0
+pymongo==4.5.0
+pandas==2.0.3
+psycopg2==2.9.7
+streamlit==1.26.0
