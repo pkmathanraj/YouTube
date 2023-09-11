@@ -29,8 +29,13 @@ This is a Web Application based on Python - Streamlit which uses Google YouTube 
 ---
 
 **Module Requirements and Installation :**
+1. Install Python (Python Version 3.11 is used to built this project) (Make sure to set the PATH variable while installation)
+2. Install PostgreSQL (PostgreSQL 14.9 is used in this project) - (Make note of your server username, password and port no)
+3. Signup to MongoDb if not available and create a new cluster for this project with permission to access from any ip location and admin level access for the user (Get the connecting string to connect to your cluster)
+4. Signup to console.cloud.google.com if not available and create a new Project and create a new YouTube Data API v3 key (Credential)
+5. Used VSCode as development environment. You can choose any IDE according to your convenience loaded with all the necessary packages.
 
-Install the following packages before running this project:
+- Install the following python packages before running this project:
 ```python
 pip install google-api-python-client
 pip install pymongo
