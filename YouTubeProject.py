@@ -674,11 +674,11 @@ def front_end_design(youtube, dbConn):
 
 # Main Function 
 def main():
-    APIKEY = "AIzaSyCNzZRqaH8XmGDq9t7bq82vd7dBy2wGxwg"
+    APIKEY = "YOUR API KEY"
     if 'youtube' not in st.session_state:
         st.session_state.youtube = youtube_connection(APIKEY)
     if 'dbConn' not in st.session_state:
-        st.session_state.dbConn = pymongo.MongoClient("mongodb+srv://pkmathanraj:86l6HxBwkTLmIlOM@utube.n0xwb3j.mongodb.net/?retryWrites=true&w=majority")
+        st.session_state.dbConn = pymongo.MongoClient("YOUR MONGODB CONNECTION STRING")
     
     front_end_design(st.session_state.youtube,st.session_state.dbConn)
     
