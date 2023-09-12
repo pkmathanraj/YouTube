@@ -59,7 +59,7 @@ def get_channel_details(channel_id, youtube):
                     'created_date' : cdt,
                     'created_time' : ctm,
                     'thumbnail' : snippet['thumbnails']['medium']['url'],
-                    'country' : snippet['country'],
+                    'country' : snippet['country'] if snippet.get('country') else "None",
                     'upload_id' : channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads'],
                     'view_count' : int(stat['viewCount']),
                     'subscriber_count' : int(stat['subscriberCount']),
@@ -182,15 +182,16 @@ def get_videos_comments(playlist_info, video_ids, youtube):
                                             'reply_likes' : reply_likes
                                             })
             
-            if "nextPageToken" in cmmnt_response:
-                page_token = cmmnt_response["nextPageToken"]
+                if "nextPageToken" in cmmnt_response:
+                    page_token = cmmnt_response["nextPageToken"]
         else:
             videos_info[vid_cnt]['comment_count'] = 0
         vid_cnt+=1
-    comment_list = {frozenset(item.items()) : item for item in comments_info}.values()
-    reply_list = {frozenset(item.items()) : item for item in reply_info}.values()
+    #comment_list = {frozenset(item.items()) : item for item in comments_info}.values()
+    #reply_list = {frozenset(item.items()) : item for item in reply_info}.values()
    
-    return videos_info, comment_list, reply_list
+    #return videos_info, comment_list, reply_list
+    return videos_info, comments_info, reply_info
 
 def store_mongodb(channel_data, playlist_data, video_data, comments_data, reply_data, dbConn):
     channel_name = channel_data['channel_name']
@@ -210,8 +211,14 @@ def store_mongodb(channel_data, playlist_data, video_data, comments_data, reply_
                 db["channel"].insert_one(channel_data)
                 db["playlists"].insert_one(playlist_data)
                 db["videos"].insert_many(video_data)
-                db["comments"].insert_many(comments_data)   #db["comments"].insert_many(comments_data, ordered=False)
-                db["replies"].insert_many(reply_data)       #db["replies"].insert_many(reply_data, ordered=False)                
+                if comments_data:
+                    db["comments"].insert_many(comments_data)    #db["comments"].insert_many(comments_data, ordered=False)
+                else:
+                    pass
+                if reply_data:
+                    db["replies"].insert_many(reply_data)  #db["replies"].insert_many(reply_data, ordered=False) 
+                else:
+                    pass                     
                 st.info("Database updated in MongoDb")
             elif choice == 'No':
                 st.info("Database not updated in MongoDb")
@@ -221,8 +228,14 @@ def store_mongodb(channel_data, playlist_data, video_data, comments_data, reply_
         db["channel"].insert_one(channel_data)
         db["playlists"].insert_one(playlist_data)
         db["videos"].insert_many(video_data)
-        db["comments"].insert_many(comments_data)   #db["comments"].insert_many(comments_data, ordered=False)
-        db["replies"].insert_many(reply_data)       #db["replies"].insert_many(reply_data, ordered=False)  
+        if comments_data:
+            db["comments"].insert_many(comments_data)    #db["comments"].insert_many(comments_data, ordered=False)
+        else:
+            pass
+        if reply_data:
+            db["replies"].insert_many(reply_data)  #db["replies"].insert_many(reply_data, ordered=False) 
+        else:
+            pass    
         st.info("Data is successfully stored in MongoDb")
     return channel_name
 
@@ -411,7 +424,7 @@ def sql_channel_list():
         with conn.cursor() as cursor:
             cursor.execute("select channel_name from channel")
             chnl_nms = cursor.fetchall()
-            chnl_nms = [i[0] for i in chnl_nms]
+            chnl_nms = [i[0].replace(" ","").replace("'","") for i in chnl_nms]
             chnl_nms.sort(reverse=False)
     conn.close()
     return chnl_nms
@@ -449,25 +462,23 @@ def sql_migration(dbConn):
 
     # Creating user option
     options = [j for j in dbs if j not in chnl_nms]
-    
     # Displaying channel list for migration
     choice = st.selectbox("List of Channels ready for migration: ", options)
     submit = st.button("Migrate")
     if submit:
-        channel_name = choice
-        pgsql_channel_migration(channel_name, dbConn)
-        st.write("Channel Data Migrated to PGSQL")
-        pgsql_playlist_migration(channel_name, dbConn)
-        st.write("Playlist Data Migrated to PGSQL")
-        pgsql_video_migration(channel_name, dbConn)
-        st.write("Video Data Migrated to PGSQL")            
-        pgsql_comment_migration(channel_name, dbConn)
-        st.write("Comments Data Migrated to PGSQL")
-        pgsql_reply_migration(channel_name, dbConn)
-        st.write("Replies Data Migrated to PGSQL")            
-        
-        st.success("---Data successfully migrated to SQL Db---")
-
+            channel_name = choice
+            pgsql_channel_migration(channel_name, dbConn)
+            st.write("Channel Data Migrated to PGSQL")
+            pgsql_playlist_migration(channel_name, dbConn)
+            st.write("Playlist Data Migrated to PGSQL")
+            pgsql_video_migration(channel_name, dbConn)
+            st.write("Video Data Migrated to PGSQL")            
+            pgsql_comment_migration(channel_name, dbConn)
+            st.write("Comments Data Migrated to PGSQL")
+            pgsql_reply_migration(channel_name, dbConn)
+            st.write("Replies Data Migrated to PGSQL")            
+            st.success("---Data successfully migrated to SQL Db---")
+                       
 # Executing SQL queries and converting to DataFrame
 def sql_query_processor(ch):
     query1 = "SELECT v.video_name, c.channel_name \
@@ -663,11 +674,11 @@ def front_end_design(youtube, dbConn):
 
 # Main Function 
 def main():
-    APIKEY = "Your API Key"
+    APIKEY = "AIzaSyCNzZRqaH8XmGDq9t7bq82vd7dBy2wGxwg"
     if 'youtube' not in st.session_state:
         st.session_state.youtube = youtube_connection(APIKEY)
     if 'dbConn' not in st.session_state:
-        st.session_state.dbConn = pymongo.MongoClient("YOUR MONGODB CONNECTION STRING")
+        st.session_state.dbConn = pymongo.MongoClient("mongodb+srv://pkmathanraj:86l6HxBwkTLmIlOM@utube.n0xwb3j.mongodb.net/?retryWrites=true&w=majority")
     
     front_end_design(st.session_state.youtube,st.session_state.dbConn)
     
